@@ -1,6 +1,6 @@
 {
   "name": "systemjs-plugin-datauri",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "System.js plugin for inlining images as base64 data uri during bundling.",
   "main": "datauri",
   "repository": {
@@ -14,5 +14,6 @@
   },
   "dependencies": {
     "mime-types": "^2.1.8"
-  }
+  },
+  "registry": "npm"
 }

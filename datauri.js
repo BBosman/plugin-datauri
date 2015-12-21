@@ -1,42 +1,42 @@
+var isWin = process && process.platform && process.platform.match(/^win/);
 var browser = typeof window !== 'undefined';
+var mime = browser ? null : System._nodeRequire('mime-types');
+var fs = browser ? null : System._nodeRequire('fs');
 
-if (!browser) {
-  var isWin = process.platform.match(/^win/);
-  var fs = System._nodeRequire('fs');
-  var mime = System._nodeRequire('mime-types')
+function fromFileURL(address) {
+  address = address.replace(/^(file|http|https):(\/+)?/i, '');
+  address = address.replace(/^localhost(:\d+)?(\/+)/i, '');
 
-  function fromFileURL(address) {
-    address = address.replace(/^file:(\/+)?/i, '');
-
-    if (!isWin)
+  if (!browser) {
+    if (!isWin) {
       address = '/' + address;
-    else
+    } else {
       address = address.replace(/\//g, '\\');
-
-    return address;
+    }
   }
-  
-  function base64_encode(file) {
-    // read binary data
-    var bitmap = fs.readFileSync(file);
     
-    // convert binary data to base64 encoded string
-    return new Buffer(bitmap).toString('base64');
-  }
-  
-  exports.translate = function (load) {
-    var rootURL = load.rootURL || fromFileURL(load.baseURL);
-    var type = mime.lookup(rootURL);
-    var data = base64_encode(rootURL);
+  return address;
+}
 
-    load.metadata.format = 'amd';
+function base64_encode(file) {
+  var bitmap = fs.readFileSync(file);
+  return new Buffer(bitmap).toString('base64');
+}
+
+function dataUri(address) {
+  var type = mime.lookup(address);
+  var data = base64_encode(address);
     
-    return 'def' + 'ine(function() {\nreturn "data:' + type + ';base64,' + data+ '";\n});';
-  }  
-} else {
-  exports.translate = function(load) {
-    load.metadata.format = 'amd';
+  return 'data:' + type + ';base64,' + data;
+}
 
-    return 'def' + 'ine(function() {\nreturn "' + load.address + '";\n});';
-  }
+function getUri(address) {
+  address = fromFileURL(address);
+
+  return browser ? address : dataUri(address);
+}
+
+exports.translate = function(load) {
+  load.metadata.format = 'amd';
+  return 'def' + 'ine(function() {\nreturn "' + getUri(load.address) + '";\n});';
 }
